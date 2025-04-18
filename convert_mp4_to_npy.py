@@ -22,6 +22,10 @@ def convert_video_to_npy(video_path):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frames.append(frame)
     cap.release()
+    # **Padding if frames < 64**
+    while len(frames) < 64:
+        frames.append(frames[-1])  # Duplicate the last frame to fill up to 64 frames
+
     video_array = np.array(frames, dtype=np.float32) / 255.0  # Normalize
     np.save(save_path, video_array)
     print(f"Saved video to {save_path}")

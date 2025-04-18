@@ -110,7 +110,13 @@ def targeted_video_attack(vid_model, vid, target_vid, directions_generator, targ
         l, g = sim_rectification_vector(vid_model, adv_vid, tentative_directions, sample_per_draw, sigma,
                                         target_class, rank_transform, sub_num_sample, group_gen, untargeted=False)
         if l is None and g is None:
-            logging.info('nes sim fails, try again....')
+            logging.info('nes sim fails, trying again with increased sigma...')
+            
+            sigma *= 1.2  # Increase by 20% instead of doubling
+            if sigma > 0.3:  # Allow up to 0.3 for stronger perturbations
+                sigma = 0.3
+            
+            logging.warning(f"⚠️ Increasing sigma to {sigma} due to repeated NES failures.")
             continue
 
         # Rectify tentative perturabtions
@@ -166,6 +172,11 @@ def targeted_video_attack(vid_model, vid, target_vid, directions_generator, targ
                 if prop_de == 0:
                     explore_succ.append(False)
                     reduce_eps_fail += 1
+
+                    if reduce_eps_fail >= 3:
+                        prop_de = max(prop_de * 1.5, 0.01)  # Ensure minimum step size
+                        logging.warning(f"⚠️ delta_eps was stuck! Increasing to {prop_de}")
+
                     logging.info('Trying to eval grad again.....')
                     break
                 prop_de = 0
@@ -227,9 +238,9 @@ def untargeted_video_attack(vid_model, vid, directions_generator, ori_class,
         last_p.append(pre_score)
         last_p = last_p[-20:]
         if last_p[-1] <= last_p[0] and len(last_p) == 20:
-            if cur_lr > min_lr:
+            if cur_lr > min_lr * 2:  # Allow reduction but not too much
                 print("[log] Annealing max_lr")
-                cur_lr = max(cur_lr / 2., min_lr)
+                cur_lr = max(cur_lr / 2., min_lr * 2)  # Keep lr at least double the minimum
             last_p = []
 
         tentative_directions = directions_generator(adv_vid).cuda()
@@ -239,7 +250,13 @@ def untargeted_video_attack(vid_model, vid, directions_generator, ori_class,
                                         ori_class, rank_transform, sub_num_sample, group_gen, untargeted=True)
 
         if l is None and g is None:
-            logging.info('nes sim fails, try again....')
+            logging.info('nes sim fails, trying again with increased sigma...')
+            
+            sigma *= 2  # Double the perturbation strength
+            if sigma > 1e-1:  # Cap max sigma
+                sigma = 1e-1
+            
+            logging.warning(f"⚠️ Increasing sigma to {sigma} due to repeated NES failures.")
             continue
 
         # Rectify tentative perturabtions
@@ -467,5 +484,6 @@ def untargeted_video_attack(vid_model, vid, directions_generator, ori_class,
 
     logging.info("Attack failed after max iterations.")
     return False, ori_class, adv_vid  # Return failure if max_iter is reached
+
 
 

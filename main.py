@@ -227,7 +227,7 @@ def main():
             vid_model, vid, target_vid, directions_generator, target_label,
             rank_transform=rank_transform, image_split=image_split,
             sub_num_sample=sub_num_sample, sigma=sigma,
-            eps=0.1, max_iter=300000, sample_per_draw=sample_per_draw
+            eps=0.15, max_iter=300000, sample_per_draw=sample_per_draw
         )
         
 
@@ -237,7 +237,7 @@ def main():
             vid_model, vid, directions_generator, vid_label,
             rank_transform=rank_transform, image_split=image_split,
             sub_num_sample=sub_num_sample, sigma=sigma,
-            eps=0.1, max_iter=300000, sample_per_draw=sample_per_draw
+            eps=0.15, max_iter=300000, sample_per_draw=sample_per_draw
         )
 
     # Convert and Save Output
